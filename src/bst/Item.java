@@ -38,6 +38,8 @@ public class Item implements Comparable<Item> {
     /**
      * Compares the value of this Item with that of other according to the
      * contract for Comparable. Increments the count of comparisons.
+     * @param other
+     * @return 
      */
     @Override
     public int compareTo(Item other) {

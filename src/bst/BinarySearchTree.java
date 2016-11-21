@@ -48,7 +48,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
 
     protected Entry<E> copy(Entry<? extends E> p, Entry<E> parent) {
         if (p != null) {
-            Entry<E> q = new Entry<E>(p.element, parent);
+            Entry<E> q = new Entry<>(p.element, parent);
             q.left = copy(p.left, q);
             q.right = copy(p.right, q);
             return q;
@@ -103,10 +103,12 @@ public class BinarySearchTree<E extends Comparable<? super E>>
      * @return the size of this BinarySearchTree object.
      *
      */
+    @Override
     public int size() {
         return size;
     } // method size()
 
+    @Override
     public boolean isEmpty() {
         return (size == 0);
     }
@@ -119,6 +121,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
      * BinarySearchTree object.
      *
      */
+    @Override
     public Iterator<E> iterator() {
         return new TreeIterator();
     } // method iterator
@@ -181,7 +184,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
                     return false;
                 }
                 if (comp < 0) {
-                    if (temp.left.getLeft() != null) {
+                    if (!temp.left.isExternal()) {      //.getLeft() != null
                         temp = temp.left;
                     } else {
                         //temp.left = new Entry<E> (element, temp);
@@ -190,7 +193,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
                         modCount++;
                         return true;
                     } // temp.left == null
-                } else if (temp.right.getRight() != null) {
+                } else if (!temp.right.isExternal()) {  //.getRight() != null
                     temp = temp.right;
                 } else {
                     //temp.right = new Entry<E> (element, temp);
@@ -250,7 +253,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
             throw new NullPointerException();
         }
         Entry<E> e = root;
-        while (e.element != null) {
+        while (!e.isExternal()) {    //e.element != null
             comp = ((Comparable<? super E>) obj).compareTo(e.element);
             if (comp == 0) {
                 return e;
@@ -275,11 +278,11 @@ public class BinarySearchTree<E extends Comparable<? super E>>
      *
      */
     protected Entry<E> deleteEntry(Entry<E> p) {
-        size--;
 
+        size--;
         // If p has two children, replace p's element with p's successor's
         // element, then make p reference that successor.
-        if (p.left != null && p.right != null) {
+        if (!p.left.isExternal() && !p.right.isExternal()) {
             Entry<E> s = successor(p);
             p.element = s.element;
             p = s;
@@ -288,7 +291,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         // At this point, p has either no children or one child.
         Entry<E> replacement;
 
-        if (p.left != null) {
+        if (!p.left.isExternal()) {
             replacement = p.left;
         } else {
             replacement = p.right;
@@ -308,12 +311,13 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         else if (p.parent == null) {
             root = null;
         } else if (p == p.parent.left) {
-            p.parent.left = null;
-            // p.makeExternal();
+            //  p.parent.left = null;
+            p.makeExternal();
         } else {
-            p.parent.right = null;
-            //p.makeExternal();
+            // p.parent.right = null;
+            p.makeExternal();
         } // p has a parent but no children
+
         return p;
     } // method deleteEntry
 
@@ -363,10 +367,10 @@ public class BinarySearchTree<E extends Comparable<? super E>>
     protected Entry<E> successor(Entry<E> e) {
         if (e == null) {
             return null;
-        } else if (e.right != null) {
+        } else if (!e.right.isExternal()) {
             // successor is leftmost Entry in right subtree of e
             Entry<E> p = e.right;
-            while (p.left != null) {
+            while (!p.left.isExternal()) {
                 p = p.left;
             }
             return p;
@@ -434,12 +438,13 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         }
     }
 
-    public void BFT() {
+  public void BFT() {
         breadthFirstTraversal(this.root);
     }
 
     protected void breadthFirstTraversal(Entry t) {
-        if (root == null) {
+        if (root.element == null) {
+            System.out.println("Tree is empty") ;
             return;
         }
         Queue<Entry> q = new ArrayDeque<>();
@@ -449,17 +454,16 @@ public class BinarySearchTree<E extends Comparable<? super E>>
             while (!q.isEmpty()) {
                 Entry n = (Entry) q.remove();
 
-                if (n.left.getElement() != null) {
+                if (!n.left.isExternal()) {
                     q.add(n.getLeft());
                 }
-                if (n.right.getElement() != null) {
+                if (!n.right.isExternal()) {
                     q.add(n.getRight());
                 }
                 System.out.println(n.element);
             }
         }
     }
-
     protected class TreeIterator implements Iterator<E> {
 
         protected Entry<E> lastReturned = null,
@@ -476,9 +480,13 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         protected TreeIterator() {
             next = root;
             if (next != null) {
-                while (next.left != null) {
+
+                while (!next.left.isExternal()) {
+
                     next = next.left;
+
                 }
+
             }
             modCountOnCreation = modCount;
         } // default constructor
@@ -492,6 +500,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
          * accessed by this TreeIterator object; otherwise, return false.
          *
          */
+        @Override
         public boolean hasNext() {
             return next != null;
         } // method hasNext
@@ -511,6 +520,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
          * was created.
          *
          */
+        @Override
         public E next() {
             if (modCountOnCreation != modCount) {
                 throw new ConcurrentModificationException();
@@ -592,7 +602,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         } // constructor
 
         public boolean isExternal() {
-
+            //&& this.left == null && this.right == null
             if (this.element == null && this.left == null && this.right == null) {
                 return true;
             } else {
@@ -603,11 +613,13 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         }
 
         public E makeExternal() {
-            if (this.element == null && this.left == null && this.right == null) {
+//            if (this.element == null && this.left == null && this.right == null) {
+//                throw new IllegalStateException();
+//            }
+
+            if(this.isExternal()){
                 throw new IllegalStateException();
             }
-
-            // this == null;
             this.element = null;
             this.left = null;
             this.right = null;
@@ -619,7 +631,8 @@ public class BinarySearchTree<E extends Comparable<? super E>>
             if (this.element != null && this.left != null && this.right != null) {
                 throw new IllegalStateException();
             }
-
+             
+           
             this.element = element;
             this.left = new Entry<>(null, this);
             this.right = new Entry<>(null, this);
