@@ -1,4 +1,4 @@
-package bst;
+package part1;
 
 import java.util.*;
 
@@ -47,7 +47,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
     } // copy constructor
 
     protected Entry<E> copy(Entry<? extends E> p, Entry<E> parent) {
-        if (p != null) {
+        if (!p.isExternal()) {
             Entry<E> q = new Entry<>(p.element, parent);
             q.left = copy(p.left, q);
             q.right = copy(p.right, q);
@@ -56,7 +56,6 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         return null;
     } // method copy
 
-    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof BinarySearchTree)) {
             return false;
@@ -68,10 +67,15 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         if (p == null || q == null) {
             return p == q;
         }
-        if (!p.element.equals(q.element)) {
-            return false;
+        if (p.element != null && q.element != null) {
+            if (!p.element.equals(q.element)) {
+                return false;
+            }
+            if (equals(p.left, q.left) && equals(p.right, q.right)) {
+                return true;
+            }
         }
-        return equals(p.left, q.left) && equals(p.right, q.right);
+        return false;
     } // method 2-parameter equals
 
     /**
@@ -108,9 +112,23 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         return size;
     } // method size()
 
+    /**
+     * Determines the tree is empty or not
+     *
+     * @return true if the size is zero else false
+     */
     @Override
     public boolean isEmpty() {
         return (size == 0);
+    }//End of method isEmpty
+
+    /**
+     * This method removes all node and make the size 0
+     */
+    public void removeAll() {
+        this.root = null;
+        this.size = 0;
+ 
     }
 
     /**
@@ -141,6 +159,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
      * @throws NullPointerException - if obj is null.
      *
      */
+    @Override
     public boolean contains(Object obj) {
         return getEntry(obj) != null;
     } // method contains
@@ -179,7 +198,8 @@ public class BinarySearchTree<E extends Comparable<? super E>>
             int comp;
 
             while (true) {
-                comp = ((Comparable) element).compareTo(temp.element);
+                //comp = ((Comparable) element).compareTo(temp.element);
+                comp = element.compareTo(temp.element);
                 if (comp == 0) {
                     return false;
                 }
@@ -252,17 +272,21 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         if (obj == null) {
             throw new NullPointerException();
         }
-        Entry<E> e = root;
-        while (!e.isExternal()) {    //e.element != null
-            comp = ((Comparable<? super E>) obj).compareTo(e.element);
-            if (comp == 0) {
-                return e;
-            } else if (comp < 0) {
-                e = e.left;
-            } else {
-                e = e.right;
-            }
-        } // while
+        if (this.root != null) {
+            Entry<E> e = root;
+
+            while (!e.isExternal()) {
+                comp = ((Comparable<? super E>) obj).compareTo(e.element);
+
+                if (comp == 0) {
+                    return e;
+                } else if (comp < 0) {
+                    e = e.left;
+                } else {
+                    e = e.right;
+                }
+            } // while
+        }
         return null;
     } // method getEntry
 
@@ -298,7 +322,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         }
 
         // If p has at least one child, link replacement to p.parent.
-        if (replacement != null) {
+        if (!replacement.isExternal()) {
             replacement.parent = p.parent;
             if (p.parent == null) {
                 root = replacement;
@@ -320,40 +344,6 @@ public class BinarySearchTree<E extends Comparable<? super E>>
 
         return p;
     } // method deleteEntry
-
-    public Entry min() {
-        if (isEmpty()) {
-            throw new NoSuchElementException();
-        }
-        return min(root);
-    }
-
-    private Entry min(Entry x) {
-        if (x.left == null) {
-            return x;
-        } else {
-            return min(x.left);
-        }
-
-    }
-
-    public Entry max() {
-        if (isEmpty()) {
-            throw new NoSuchElementException();
-        }
-        return max(root);
-    }
-
-    public Entry max(Entry x) {
-        if (isEmpty()) {
-            throw new NoSuchElementException();
-        }
-        if (x.right == null) {
-            return x;
-        } else {
-            return max(x.right);
-        }
-    }
 
     /**
      * Finds the successor of a specified Entry object in this BinarySearchTree.
@@ -388,67 +378,40 @@ public class BinarySearchTree<E extends Comparable<? super E>>
             return p;
         } // e has no right child
     } // method successor
-    //modified
-//    protected Entry<E> successor(Entry<E> e) {
-//        if (e == null) {
-//            return null;
-//        }
-//        if (e.right != null) {
-//            return min(e.right);
-//        }
-//        Entry p = e.parent;
-//
-//        while (p != null && e == p.right) {
-//            e = p;
-//            p = p.parent;
-//        }
-//        return p;
-//    } // method successor
 
     /**
-     * Calculate height of the tree
+     * Determines the height of the tree
      *
-     * @return height of the tree
+     * @return the height of the BST (a 1-node tree has height 0)
      */
-    public Integer height() {
-        return numLevels(root);
+    public int height() {
+        if (this.root != null) {
+            return height(this.root);
+        }
+        return -1;
     }
 
-    private int numLevels(Entry root) {
-        if (root == null) {
-            return 0;
-        } else if (root.left != null && root.right != null) {
-            return 1 + Math.max(numLevels(root.left), numLevels(root.right));
+    public int height(Entry x) {
+
+        if (!x.isExternal()) {
+            return 1 + Math.max(height(x.getLeft()), height(x.getRight()));
         }
-        return 0;
+        return -1;
     }
 
     /**
-     * InOrder Traversal
+     * Displays the trees element level by level
      */
-    public void inOrderTraversal() {
-        inOrderT(this.root);
-    }
-
-    protected void inOrderT(Entry element) {
-        if (element != null) {
-            inOrderT(element.left);
-            System.out.println(element.getElement());
-            inOrderT(element.right);
+    public void BFT() {
+        if (!isEmpty()) {
+            breadthFirstTraversal(this.root);
         }
-    }
-
-  public void BFT() {
-        breadthFirstTraversal(this.root);
     }
 
     protected void breadthFirstTraversal(Entry t) {
-        if (root.element == null) {
-            System.out.println("Tree is empty") ;
-            return;
-        }
+
         Queue<Entry> q = new ArrayDeque<>();
-        if (t != null) {
+        if (!t.isExternal()) {
             q.add(t);
 
             while (!q.isEmpty()) {
@@ -460,10 +423,12 @@ public class BinarySearchTree<E extends Comparable<? super E>>
                 if (!n.right.isExternal()) {
                     q.add(n.getRight());
                 }
-                System.out.println(n.element);
+                System.out.print(n.element + ",");
+
             }
         }
     }
+
     protected class TreeIterator implements Iterator<E> {
 
         protected Entry<E> lastReturned = null,
@@ -478,18 +443,16 @@ public class BinarySearchTree<E extends Comparable<? super E>>
          *
          */
         protected TreeIterator() {
-            next = root;
-            if (next != null) {
-
-                while (!next.left.isExternal()) {
-
-                    next = next.left;
-
+            if (root != null) {
+                next = root;
+                if (next != null) {
+                    while (!next.left.isExternal()) {
+                        next = next.left;
+                    }
                 }
-
-            }
-            modCountOnCreation = modCount;
-        } // default constructor
+                modCountOnCreation = modCount;
+            } // default constructor
+        }
 
         /**
          * Determines if there are still some elements, in the BinarySearchTree
@@ -554,7 +517,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
                 throw new ConcurrentModificationException();
             }
 
-            if (lastReturned.left != null && lastReturned.right != null) {
+            if (!lastReturned.left.isExternal() && !lastReturned.right.isExternal()) {
                 next = lastReturned;
             }
             deleteEntry(lastReturned);
@@ -600,6 +563,18 @@ public class BinarySearchTree<E extends Comparable<? super E>>
             this.element = element;
             this.parent = parent;
         } // constructor
+ 
+        public boolean equals(Object that) {
+            //compCount++;
+            if (this == that) {
+                return true;
+            }
+            if (!(that instanceof Entry)) {
+                return false;
+            }
+            Entry other = (Entry) that;
+            return this.element.equals(other.element);
+        }
 
         public boolean isExternal() {
             //&& this.left == null && this.right == null
@@ -613,11 +588,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
         }
 
         public E makeExternal() {
-//            if (this.element == null && this.left == null && this.right == null) {
-//                throw new IllegalStateException();
-//            }
-
-            if(this.isExternal()){
+            if (this.isExternal()) {
                 throw new IllegalStateException();
             }
             this.element = null;
@@ -631,8 +602,7 @@ public class BinarySearchTree<E extends Comparable<? super E>>
             if (this.element != null && this.left != null && this.right != null) {
                 throw new IllegalStateException();
             }
-             
-           
+
             this.element = element;
             this.left = new Entry<>(null, this);
             this.right = new Entry<>(null, this);
